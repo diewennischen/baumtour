@@ -73,6 +73,36 @@ footer{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:
 footer .in{max-width:640px;margin:0 auto;display:flex;gap:10px;align-items:center}
 footer .prog{font-size:14px;color:var(--muted);flex:1}
 footer .prog b{color:var(--text);font-size:18px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.tabs button{font-size:15px;font-weight:600;padding:8px;border-radius:8px;background:rgba(255,255,255,.15)}
+.tabs button.on{background:#fff;color:var(--accent)}
+#mapView{position:fixed;left:0;right:0;z-index:5}
+#map{position:absolute;inset:0;background:var(--line)}
+.mapbtns{position:absolute;right:12px;top:12px;z-index:500;display:grid;gap:8px}
+.mapbtns button{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:20px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.maplegend{position:absolute;left:8px;bottom:26px;z-index:500;background:var(--card);color:var(--text);border-radius:8px;padding:4px 8px;font-size:11px;box-shadow:0 1px 4px rgba(0,0,0,.25);display:flex;flex-wrap:wrap;gap:4px 8px;max-width:calc(100% - 16px)}
+.maplegend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:3px}
+.maptop{position:absolute;left:12px;top:12px;z-index:500;display:grid;gap:6px;justify-items:start}
+.rtoggle{display:flex;background:var(--card);border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.25);overflow:hidden;border:1px solid var(--line)}
+.rtoggle button{border:0;background:none;color:var(--text);font:inherit;font-size:14px;font-weight:600;padding:9px 12px}
+.rtoggle button.on{background:var(--accent);color:#fff}
+.roadinfo{background:var(--card);color:var(--text);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.roadinfo .linkbtn{padding:0 0 0 4px;font-size:13px}
+.ptag{display:inline-block;background:var(--warn-bg);color:var(--warn);font-size:12px;font-weight:600;border-radius:999px;padding:1px 8px;margin-top:4px}
+.ptree{border-top:1px solid var(--line);margin-top:8px;padding-top:6px}
+.phint{background:var(--warn-bg);color:var(--warn);border-radius:6px;padding:3px 6px;font-size:12px;margin-top:4px}
+.pst{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.pp .pst .btn{min-height:42px;margin-top:0;font-size:13px;padding:4px}
+.pp .btn.on-z{background:var(--ok);border-color:var(--ok);color:#fff}
+.pp .btn.on-n{background:var(--bad);border-color:var(--bad);color:#fff}
+.pp .linkbtn{display:block;margin-top:4px}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--card);color:var(--text)}
+.pin{width:30px;height:30px;border-radius:50%;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45)}
+.pin.open{background:#1f6f43}.pin.next{background:#2563eb;transform:scale(1.25)}.pin.z{background:#6b7280}.pin.n{background:#b91c1c}.pin.dep{background:#facc15;color:#111;border-color:#111}
+.me{width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,.25)}
+.leaflet-popup-content{margin:10px 12px;font:14px/1.35 system-ui,-apple-system,sans-serif}
+.pp .btn{min-height:40px;margin-top:6px;font-size:14px}
+.pp .t{font-weight:700;font-size:15px}
 .netinfo{font-size:12px;color:var(--muted)}
 .netinfo.err{color:var(--bad)}
 .sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
@@ -94,9 +124,16 @@ select{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);
     <div><h1 id="title">Tour</h1><div class="sub" id="subtitle"></div></div>
     <button id="btnSettings" aria-label="Einstellungen">⚙</button>
   </div>
+  <div class="tabs" id="tabs"><button data-tab="list" class="on">📋 Liste</button><button data-tab="map">🗺 Karte</button></div>
   <div class="bar"><i id="barFill"></i></div>
 </header>
 <main id="main"></main>
+<div id="mapView" hidden><div id="map"></div>
+  <div class="maptop"><div class="rtoggle" id="rtoggle"><button data-rt="line">Luftlinie</button><button data-rt="road">Straße</button></div>
+    <div class="roadinfo" id="roadInfo" hidden></div></div>
+  <div class="mapbtns"><button id="btnLocate" title="Eigenen Standort anzeigen (wird nicht übertragen)">📍</button><button id="btnFit" title="Ganze Tour anzeigen">⤢</button></div>
+  <div class="maplegend"><span><i style="background:var(--next)"></i>als Nächstes</span><span><i style="background:var(--accent)"></i>offen</span><span><i style="background:#6b7280"></i>zugestellt</span><span><i style="background:var(--bad)"></i>nicht angetroffen</span></div>
+</div>
 <footer id="ftr" hidden>
   <div class="in">
     <div class="prog"><div id="prog"></div><div id="net" class="netinfo"></div></div>
@@ -243,6 +280,7 @@ function render(){
   if(T.dep) html += `<div class="card"><div class="addr">🏁 Zurück zum Depot</div><div class="city">${esc(T.dep)}</div>
     <div class="acts" style="grid-template-columns:1fr"><a class="btn primary" href="${esc(navUrl(T.dep))}" target="_blank" rel="noopener">🧭 Navigieren</a></div></div>`;
   $('main').innerHTML = html;
+  if(map && !$('mapView').hidden) renderMap(false);
 }
 
 function reportText(){
@@ -314,12 +352,15 @@ function openSettings(){
 }
 
 /* ---------- Ereignisse ---------- */
+function toggleSt(nr, v){
+  S.st[nr] = S.st[nr] === v ? undefined : v; if(!S.st[nr]) delete S.st[nr];
+  persist(); enqueue({k:'s', n:nr, s:S.st[nr] || ''}); render();
+}
 $('main').addEventListener('click', e => {
   const b = e.target.closest('[data-st]');
   if(b){
     const nr = b.dataset.nr, v = b.dataset.st, i = +b.dataset.i;
-    S.st[nr] = S.st[nr] === v ? undefined : v; if(!S.st[nr]) delete S.st[nr];
-    persist(); render(); enqueue({k:'s', n:nr, s:S.st[nr] || ''});
+    toggleSt(nr, v);
     if(stopDone(T.s[i])){   // zum nächsten offenen Stopp springen
       const nx = T.s.findIndex(s => !stopDone(s));
       if(nx >= 0) setTimeout(() => $('stop'+nx)?.scrollIntoView({behavior:'smooth', block:'start'}), 150);
@@ -336,6 +377,167 @@ $('main').addEventListener('input', e => { const n = e.target.closest('[data-not
 $('btnReport').onclick = openReport;
 $('btnSettings').onclick = openSettings;
 
+
+/* ---------- Kartenansicht ---------- */
+let map = null, mapLayer = null, meMarker = null, leafletLoading = null;
+function loadLeaflet(){
+  if(window.L) return Promise.resolve();
+  if(leafletLoading) return leafletLoading;
+  leafletLoading = new Promise((res, rej) => {
+    const css = document.createElement('link'); css.rel = 'stylesheet';
+    css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(css);
+    const js = document.createElement('script'); js.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    js.onload = res; js.onerror = () => { leafletLoading = null; rej(new Error('Karte konnte nicht geladen werden')); };
+    document.head.appendChild(js);
+  });
+  return leafletLoading;
+}
+function placeMapView(){
+  const mv = $('mapView'); mv.style.top = $('hdr').offsetHeight + 'px'; mv.style.bottom = $('ftr').offsetHeight + 'px';
+  if(map) map.invalidateSize();
+}
+const hasGeo = s => s[5] != null && s[6] != null;
+function stopState(s){ if(!stopDone(s)) return 'open'; return s[4].every(t => S.st[t[0]] === 'n') ? 'n' : 'z'; }
+let markers = [], openIdx = null;
+function popupHtml(i){
+  const s = T.s[i], done = stopDone(s), nx = T.s.findIndex(x => !stopDone(x));
+  return `<div class="pp"><div class="t">${i+1}. ${esc(s[0])}</div>${esc([s[1],s[2]].filter(Boolean).join(' '))}
+    ${s[4].some(t=>t[4]) ? '<div class="ptag">Rechnung mitnehmen</div>' : ''}
+    ${s[4].map(t => `<div class="ptree"><b>Baum ${esc(t[0])}</b> <span class="small">${esc(t[1])}</span>
+      ${t[3] ? `<div class="phint">${esc(t[3])}</div>` : ''}
+      <div class="pst"><button class="btn${S.st[t[0]]==='z'?' on-z':''}" data-st="z" data-nr="${esc(t[0])}" data-i="${i}">✓ Zugestellt</button>
+        <button class="btn${S.st[t[0]]==='n'?' on-n':''}" data-st="n" data-nr="${esc(t[0])}" data-i="${i}">✗ Nicht da</button></div></div>`).join('')}
+    ${done && nx >= 0 ? `<button class="btn primary" data-next="${nx}" style="width:100%">Weiter zu Stopp ${nx+1} →</button>`
+      : `<a class="btn primary" href="${esc(navUrl(addrOf(s)))}" target="_blank" rel="noopener">🧭 Navigieren</a>`}
+    <button class="linkbtn" data-goto="${i}">In der Liste zeigen</button></div>`;
+}
+function renderMap(fit){
+  if(!map) return;
+  const keep = openIdx;
+  mapLayer.clearLayers(); markers = [];
+  const nextIdx = T.s.findIndex(s => !stopDone(s));
+  drawRoute(nextIdx);
+  if(T.dl) L.marker(T.dl, {icon:L.divIcon({className:'', html:'<div class="pin dep">D</div>', iconSize:[30,30], iconAnchor:[15,15]})})
+    .bindPopup(`<div class="pp"><div class="t">Depot</div>${esc(T.dep||'')}<a class="btn primary" href="${esc(navUrl(T.dep||''))}" target="_blank" rel="noopener">🧭 Navigieren</a></div>`).addTo(mapLayer);
+  T.s.forEach((s, i) => {
+    if(!hasGeo(s)) return;
+    const stt = i === nextIdx ? 'next' : stopState(s);
+    const icon = L.divIcon({className:'', html:`<div class="pin ${stt}">${stt==='z'?'✓':stt==='n'?'✗':i+1}</div>`, iconSize:[30,30], iconAnchor:[15,15]});
+    const m = L.marker([s[5], s[6]], {icon, zIndexOffset: stt==='next' ? 1000 : stt==='open' ? 500 : 0})
+      .bindPopup(() => popupHtml(i), {minWidth:230, maxWidth:280, autoPanPaddingTopLeft:[10,60]}).addTo(mapLayer);
+    m.on('popupopen', () => { openIdx = i; });
+    m.on('popupclose', () => { if(openIdx === i) openIdx = null; });
+    markers[i] = m;
+  });
+  if(keep != null && markers[keep]) markers[keep].openPopup();
+  if(fit) fitMap();
+}
+
+// Straßenroute: wird auf dem Fahrer-Handy selbst berechnet (OSRM) und zwischengespeichert
+pref.route ??= 'line';
+let road = load(KEY + '_road', null), roadLoading = false, roadErr = '';
+const ROUTERS = ['https://router.project-osrm.org', 'https://routing.openstreetmap.de/routed-car'];
+async function osrmGet(path){
+  let last;
+  for(const base of ROUTERS){
+    try{ const r = await fetch(base + path); if(!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json(); if(j.code === 'Ok') return j; throw new Error(j.message || j.code); }
+    catch(e){ last = e; }
+  }
+  throw last;
+}
+function routePts(){
+  const gi = T.s.map((s,i) => hasGeo(s) ? i : -1).filter(i => i >= 0);
+  const pts = gi.map(i => [T.s[i][5], T.s[i][6]]);
+  return T.dl ? {pts:[T.dl, ...pts, T.dl], ends:[...gi, 'D']} : {pts, ends:gi.slice(1)};   // ends[k] = Ziel von Abschnitt k
+}
+async function loadRoad(){
+  const {pts} = routePts(), sig = pts.map(p => p.join(',')).join(';');
+  if(road && road.sig === sig) return;
+  roadLoading = true; roadErr = ''; renderRoadInfo();
+  try{
+    const j = await osrmGet(`/route/v1/driving/${pts.map(p => p[1] + ',' + p[0]).join(';')}?overview=false&steps=true&geometries=geojson`);
+    const thinL = (a, max) => { if(a.length <= max) return a; const k = Math.ceil(a.length / max); return a.filter((p,i) => i % k === 0 || i === a.length - 1); };
+    road = {sig, legs: j.routes[0].legs.map(l => thinL(l.steps.flatMap(st => st.geometry.coordinates.map(c => [+c[1].toFixed(5), +c[0].toFixed(5)])), 200)),
+            dur: j.routes[0].legs.map(l => Math.round(l.duration))};
+    save(KEY + '_road', road);
+  }catch(e){ roadErr = e.message || 'nicht erreichbar'; }
+  roadLoading = false; renderMap(false);
+}
+function drawRoute(nextIdx){
+  const {pts, ends} = routePts();
+  const useRoad = pref.route === 'road' && road && road.sig === pts.map(p => p.join(',')).join(';');
+  if(pref.route === 'road' && !useRoad && !roadLoading && !roadErr) loadRoad();
+  if(!useRoad){
+    if(pts.length > 1) L.polyline(pts, {color:'#2563eb', weight:3, opacity:.55, dashArray:'6 6', interactive:false}).addTo(mapLayer);
+  } else {
+    road.legs.forEach((leg, k) => {
+      const e = ends[k], done = e !== 'D' && stopDone(T.s[e]), isNext = e === nextIdx || (e === 'D' && nextIdx < 0);
+      L.polyline(leg, done ? {color:'#6b7280', weight:4, opacity:.45, interactive:false}
+                           : {color:'#2563eb', weight: isNext ? 7 : 5, opacity: isNext ? .95 : .7, interactive:false}).addTo(mapLayer);
+    });
+  }
+  renderRoadInfo(useRoad ? ends : null);
+}
+function renderRoadInfo(ends){
+  document.querySelectorAll('#rtoggle button').forEach(b => b.classList.toggle('on', b.dataset.rt === pref.route));
+  const el = $('roadInfo');
+  if(pref.route !== 'road'){ el.hidden = true; return; }
+  el.hidden = false;
+  if(roadLoading) el.textContent = '🚗 Route wird berechnet …';
+  else if(roadErr) el.innerHTML = `⚠ Route nicht verfügbar (${esc(roadErr)}) <button class="linkbtn" id="roadRetry">Erneut</button>`;
+  else if(ends && road){
+    const rest = road.dur.reduce((a, d, k) => a + (ends[k] === 'D' || !stopDone(T.s[ends[k]]) ? d : 0), 0);
+    el.textContent = `🚗 noch ca. ${rest < 3600 ? Math.round(rest/60) + ' min' : Math.floor(rest/3600) + ' h ' + String(Math.round(rest%3600/60)).padStart(2,'0') + ' min'} Fahrt`;
+  }
+}
+function fitMap(){
+  const open = T.s.filter(s => hasGeo(s) && !stopDone(s)).map(s => [s[5], s[6]]);
+  const all = T.s.filter(hasGeo).map(s => [s[5], s[6]]);
+  const pts = open.length ? open : all; if(T.dl) pts.push(T.dl);
+  if(pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.12), {maxZoom:16});
+}
+async function showTab(tab){
+  pref.tab = tab; save('bt_pref', pref);
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  const isMap = tab === 'map';
+  $('mapView').hidden = !isMap; $('main').hidden = isMap;
+  if(!isMap) return;
+  placeMapView();
+  if(!T.s.some(hasGeo)){ $('map').innerHTML = '<div class="msg small">Für diese Tour sind keine Kartendaten im Link. Bitte einen neuen Link anfordern.</div>'; return; }
+  try{ await loadLeaflet(); }catch(e){ $('map').innerHTML = `<div class="msg small">${esc(e.message)}. Bitte Internetverbindung prüfen.</div>`; return; }
+  if(!map){
+    map = L.map('map', {zoomControl:false});
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, attribution:'Tiles © Esri'}).addTo(map);
+    mapLayer = L.layerGroup().addTo(map);
+    renderMap(true);
+  } else { map.invalidateSize(); renderMap(false); }
+}
+$('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if(b) showTab(b.dataset.tab); });
+$('btnFit').onclick = () => map && fitMap();
+$('btnLocate').onclick = () => {
+  if(!navigator.geolocation) return alert('Standort wird von diesem Gerät nicht unterstützt.');
+  $('btnLocate').textContent = '⏳';
+  navigator.geolocation.getCurrentPosition(p => {
+    $('btnLocate').textContent = '📍';
+    const ll = [p.coords.latitude, p.coords.longitude];
+    if(meMarker) meMarker.setLatLng(ll); else meMarker = L.marker(ll, {icon:L.divIcon({className:'', html:'<div class="me"></div>', iconSize:[16,16], iconAnchor:[8,8]}), interactive:false}).addTo(map);
+    map.setView(ll, Math.max(map.getZoom(), 15));
+  }, err => { $('btnLocate').textContent = '📍'; alert('Standort nicht verfügbar: ' + err.message); }, {enableHighAccuracy:true, timeout:15000});
+};
+$('mapView').addEventListener('click', e => {
+  const b = e.target.closest('[data-st]');
+  if(b){ L.DomEvent.stop(e); toggleSt(b.dataset.nr, b.dataset.st); return; }
+  const nx = e.target.closest('[data-next]');
+  if(nx){ const i = +nx.dataset.next; map.closePopup(); map.panTo([T.s[i][5], T.s[i][6]]); setTimeout(() => markers[i]?.openPopup(), 300); return; }
+  const rt = e.target.closest('[data-rt]');
+  if(rt){ pref.route = rt.dataset.rt; save('bt_pref', pref); roadErr = ''; renderMap(false); return; }
+  if(e.target.id === 'roadRetry'){ roadErr = ''; loadRoad(); return; }
+  const g = e.target.closest('[data-goto]'); if(!g) return;
+  showTab('list'); setTimeout(() => $('stop' + g.dataset.goto)?.scrollIntoView({behavior:'smooth', block:'start'}), 50);
+});
+window.addEventListener('resize', () => { if(!$('mapView').hidden) placeMapView(); });
+
 /* ---------- Start ---------- */
 if(T === null) message('Baum-Tour Fahrer-Ansicht', 'Diese Seite zeigt Liefertouren für Fahrer. Bitte den Link oder QR-Code aus dem Tourenplaner öffnen.');
 else if(T === 'bad' || !T.s) message('Link unvollständig', 'Der Link konnte nicht gelesen werden. Wahrscheinlich wurde er beim Kopieren abgeschnitten. Bitte den Link neu anfordern.');
@@ -347,6 +549,7 @@ else {
   $('subtitle').textContent = `${T.s.length} Stopps · ${n} Bäume${T.at ? ' · Stand ' + new Date(T.at).toLocaleString('de-DE',{weekday:'short',hour:'2-digit',minute:'2-digit'}) : ''}`;
   $('hdr').hidden = false; $('ftr').hidden = false;
   render(); renderNet(); if(outbox.length) scheduleFlush(500);
+  if(pref.tab === 'map') showTab('map');
 }
 </script>
 </body>
