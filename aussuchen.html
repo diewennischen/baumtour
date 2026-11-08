@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#1f6f43">
+<title>Bäume aussuchen</title>
+<style>
+:root{
+  --bg:#f4f6f3; --card:#ffffff; --text:#17201b; --muted:#5f6d65; --line:#dde3dc;
+  --accent:#1f6f43; --accent-2:#2c8a56; --ok:#15803d; --ok-bg:#dcfce7; --bad:#b91c1c; --bad-bg:#fee2e2;
+  --warn:#92400e; --warn-bg:#fef3c7; --work:#1d4ed8; --work-bg:#dbeafe;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#0f1512; --card:#18211c; --text:#e8efe9; --muted:#9aaba1; --line:#2a362f; --accent:#2c8a56; --accent-2:#36a366;
+    --ok:#4ade80; --ok-bg:#12301e; --bad:#f87171; --bad-bg:#3a1515; --warn:#fcd34d; --warn-bg:#3a2e0b; --work:#93c5fd; --work-bg:#14233a; }
+}
+:root[data-theme="dark"]{ --bg:#0f1512; --card:#18211c; --text:#e8efe9; --muted:#9aaba1; --line:#2a362f; --accent:#2c8a56; --accent-2:#36a366;
+  --ok:#4ade80; --ok-bg:#12301e; --bad:#f87171; --bad-bg:#3a1515; --warn:#fcd34d; --warn-bg:#3a2e0b; --work:#93c5fd; --work-bg:#14233a; }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:10;background:var(--accent);color:#fff;padding:12px 16px 10px;padding-top:calc(12px + env(safe-area-inset-top))}
+header .row1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+header h1{font-size:19px;margin:0}
+header .sub{font-size:13px;opacity:.92;margin-top:2px}
+header button.ic{background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:8px;font-size:15px;padding:6px 10px}
+.bar{height:6px;background:rgba(255,255,255,.3);border-radius:3px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:#fff;width:0;transition:width .3s}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;border:0;border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;font-weight:600;background:rgba(255,255,255,.18);color:#fff}
+.chips button.on{background:#fff;color:var(--accent)}
+.chips button small{font-weight:400;opacity:.8}
+.search{margin-top:8px;width:100%;font:inherit;padding:8px 10px;border-radius:8px;border:0;background:rgba(255,255,255,.95);color:#17201b}
+main{padding:12px 16px;max-width:680px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.card.work{border:2px solid var(--work);background:var(--work-bg)}
+.card.mine{box-shadow:0 0 0 3px rgba(37,99,235,.25)}
+.card.done{opacity:.65}
+.card.issue{border-color:var(--bad)}
+.top{display:flex;gap:10px;align-items:flex-start}
+.nr{min-width:58px;text-align:center;border-radius:10px;background:var(--accent);color:#fff;padding:6px 4px}
+.nr b{display:block;font-size:22px;line-height:1.1}
+.nr span{font-size:11px;opacity:.9}
+.nr.none{background:var(--line);color:var(--muted)}
+.size{font-size:13px;color:var(--muted)}
+.wish{font-size:20px;font-weight:800;line-height:1.2;margin-top:2px}
+.raw{font-size:13px;color:var(--muted);margin-top:2px}
+.tags{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:12px;font-weight:600;border-radius:999px;padding:2px 8px;background:var(--line);color:var(--text)}
+.tag.form{background:#e0f2fe;color:#075985}
+.tag.cut{background:var(--warn-bg);color:var(--warn)}
+.warnl{background:var(--bad-bg);color:var(--bad);border-radius:8px;padding:6px 8px;font-size:14px;margin-top:8px;font-weight:600}
+.note{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:6px 8px;font-size:14px;margin-top:8px}
+.state{font-size:14px;font-weight:600;margin-top:8px}
+.state.work{color:var(--work)} .state.done{color:var(--ok)} .state.issue{color:var(--bad)}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.acts .wide{grid-column:1/-1}
+.btn{display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-weight:600;padding:8px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.small{min-height:36px;font-size:14px;font-weight:500}
+.btn[disabled]{opacity:.45}
+input.in{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text)}
+footer{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:10;font-size:13px;color:var(--muted)}
+footer .in2{max-width:680px;margin:0 auto;display:flex;justify-content:space-between;gap:8px}
+footer .err{color:var(--bad)}
+.msg{text-align:center;padding:40px 16px}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(70px + env(safe-area-inset-bottom));background:#111;color:#fff;border-radius:10px;padding:12px 14px;z-index:30;font-size:15px;max-width:600px;margin:0 auto}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal .in3{background:var(--card);color:var(--text);border-radius:14px;padding:18px;width:100%;max-width:420px}
+.modal h2{margin:0 0 8px;font-size:19px}
+</style>
+</head>
+<body>
+<header id="hdr" hidden>
+  <div class="row1">
+    <div><h1 id="title">🌲 Bäume aussuchen</h1><div class="sub" id="sub"></div></div>
+    <button class="ic" id="btnName" title="Namen ändern">👤</button>
+  </div>
+  <div class="bar"><i id="barFill"></i></div>
+  <div class="chips" id="stChips"></div>
+  <div class="chips" id="szChips"></div>
+  <input class="search" id="search" type="search" placeholder="Suchen: Nummer, ID, Wunsch …">
+</header>
+<main id="main"></main>
+<footer id="ftr" hidden><div class="in2"><span id="net"></span><span id="cnt"></span></div></footer>
+
+<script>/*! lz-string v1.5.0 | MIT License | (c) 2013 pieroxy | https://github.com/pieroxy/lz-string */
+var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$",e={};function t(r,o){if(!e[r]){e[r]={};for(var n=0;n<r.length;n++)e[r][r.charAt(n)]=n}return e[r][o]}var i={compressToBase64:function(r){if(null==r)return"";var n=i._compress(r,6,function(r){return o.charAt(r)});switch(n.length%4){default:case 0:return n;case 1:return n+"===";case 2:return n+"==";case 3:return n+"="}},decompressFromBase64:function(r){return null==r?"":""==r?null:i._decompress(r.length,32,function(n){return t(o,r.charAt(n))})},compressToUTF16:function(o){return null==o?"":i._compress(o,15,function(o){return r(o+32)})+" "},decompressFromUTF16:function(r){return null==r?"":""==r?null:i._decompress(r.length,16384,function(o){return r.charCodeAt(o)-32})},compressToUint8Array:function(r){for(var o=i.compress(r),n=new Uint8Array(2*o.length),e=0,t=o.length;e<t;e++){var s=o.charCodeAt(e);n[2*e]=s>>>8,n[2*e+1]=s%256}return n},decompressFromUint8Array:function(o){if(null==o)return i.decompress(o);for(var n=new Array(o.length/2),e=0,t=n.length;e<t;e++)n[e]=256*o[2*e]+o[2*e+1];var s=[];return n.forEach(function(o){s.push(r(o))}),i.decompress(s.join(""))},compressToEncodedURIComponent:function(r){return null==r?"":i._compress(r,6,function(r){return n.charAt(r)})},decompressFromEncodedURIComponent:function(r){return null==r?"":""==r?null:(r=r.replace(/ /g,"+"),i._decompress(r.length,32,function(o){return t(n,r.charAt(o))}))},compress:function(o){return i._compress(o,16,function(o){return r(o)})},_compress:function(r,o,n){if(null==r)return"";var e,t,i,s={},u={},a="",p="",c="",l=2,f=3,h=2,d=[],m=0,v=0;for(i=0;i<r.length;i+=1)if(a=r.charAt(i),Object.prototype.hasOwnProperty.call(s,a)||(s[a]=f++,u[a]=!0),p=c+a,Object.prototype.hasOwnProperty.call(s,p))c=p;else{if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++),s[p]=f++,c=String(a)}if(""!==c){if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++)}for(t=2,e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;for(;;){if(m<<=1,v==o-1){d.push(n(m));break}v++}return d.join("")},decompress:function(r){return null==r?"":""==r?null:i._decompress(r.length,32768,function(o){return r.charCodeAt(o)})},_decompress:function(o,n,e){var t,i,s,u,a,p,c,l=[],f=4,h=4,d=3,m="",v=[],g={val:e(0),position:n,index:1};for(t=0;t<3;t+=1)l[t]=t;for(s=0,a=Math.pow(2,2),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 2:return""}for(l[3]=c,i=c,v.push(c);;){if(g.index>o)return"";for(s=0,a=Math.pow(2,d),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(c=s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 2:return v.join("")}if(0==f&&(f=Math.pow(2,d),d++),l[c])m=l[c];else{if(c!==h)return null;m=i+i.charAt(0)}v.push(m),l[h++]=i+m.charAt(0),i=m,0==--f&&(f=Math.pow(2,d),d++)}}};return i}();"function"==typeof define&&define.amd?define(function(){return LZString}):"undefined"!=typeof module&&null!=module?module.exports=LZString:"undefined"!=typeof angular&&null!=angular&&angular.module("LZString",[]).factory("LZString",function(){return LZString});</script>
+<script>
+/* ===================== Gemeinsamer Kern: Verschlüsselung, Größen, Ereignisse, Live-Kanal ===================== */
+const b64u = {
+  enc: buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),
+  dec: s => { s = s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length % 4) s += '='; return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+};
+const aesKey = k => crypto.subtle.importKey('raw', b64u.dec(k), 'AES-GCM', false, ['encrypt','decrypt']);
+async function encryptMsg(k, obj){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, await aesKey(k), new TextEncoder().encode(JSON.stringify(obj)));
+  const out = new Uint8Array(12 + ct.byteLength); out.set(iv); out.set(new Uint8Array(ct), 12);
+  return 'BT1.' + b64u.enc(out);
+}
+async function decryptMsg(k, txt){
+  if(typeof txt !== 'string' || !txt.startsWith('BT1.')) return null;
+  const b = b64u.dec(txt.slice(4));
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:b.slice(0,12)}, await aesKey(k), b.slice(12));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+const NTFY = 'https://ntfy.sh/';
+
+// ---- Größenwünsche lesen: „1,85“, „190cm“, „Ca 2.20 m“, „1,9-2,0m“, „min. 240 cm“, „[<Max 2, 50 m]“ …
+const SIZE_ORDER = ['XS','S','M','L','XL','XXL'];
+const catKey = c => (String(c||'').match(/^\s*([A-Z]{1,3})\b/) || [])[1] || '?';
+function toM(s){
+  let v = parseFloat(String(s).replace(/\s/g,'').replace(',', '.'));
+  if(isNaN(v)) return null;
+  if(v >= 10) v /= 100;                       // Zentimeter
+  return v >= 0.5 && v <= 6 ? Math.round(v * 100) / 100 : null;
+}
+const heightsIn = t => [...String(t||'').matchAll(/\d+(?:\s?[.,]\s?\d+)?/g)].map(m => toM(m[0])).filter(v => v != null);
+function parseWish(size, max, cat){
+  const t = String(size||'').toLowerCase(), hs = heightsIn(size), mx = heightsIn(max);
+  const cr = heightsIn((String(cat||'').match(/\(([^)]*)\)/) || [])[1]);
+  let lo = null, hi = null, target = null;
+  if(hs.length >= 2){ lo = Math.min(...hs); hi = Math.max(...hs); }
+  else if(hs.length === 1){
+    if(/min|mindest|nicht kleiner|nicht unter|\bab\b/.test(t)) lo = hs[0];
+    else if(/max|höchstens|nicht größer|\bbis\b/.test(t)) hi = hs[0];
+    else target = hs[0];
+  }
+  return {lo, hi, target, max: mx.length ? Math.max(...mx) : null, cat: cr.length ? cr : null};
+}
+const fmtM = v => v == null ? '' : v.toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' m';
+function wishText(w){
+  const p = [];
+  if(w.target != null) p.push('≈ ' + fmtM(w.target));
+  else if(w.lo != null && w.hi != null) p.push(fmtM(w.lo).replace(' m','') + ' – ' + fmtM(w.hi));
+  else if(w.lo != null) p.push('mind. ' + fmtM(w.lo));
+  else if(w.hi != null) p.push('bis ' + fmtM(w.hi));
+  if(w.max != null) p.push('max ' + fmtM(w.max));
+  return p.join(' · ');
+}
+// Widersprüche zwischen Wunsch, Höchstmaß und gebuchter Kategorie
+function wishIssues(w){
+  const out = [], want = w.target ?? w.lo ?? w.hi;
+  if(w.max != null && want != null && (w.lo ?? w.target ?? 0) > w.max + 0.001) out.push('Wunsch höher als Höchstmaß – Höchstmaß beachten');
+  if(w.cat && w.cat.length >= 2 && want != null){
+    const lo = Math.min(...w.cat), hi = Math.max(...w.cat);
+    if(want < lo - 0.1 || want > hi + 0.1) out.push(`Wunsch passt nicht zur Kategorie (${fmtM(lo).replace(' m','')} – ${fmtM(hi)})`);
+  }
+  return out;
+}
+const TAGS = [[/anspitz|spitzt/i,'✂ anspitzen'],[/schmal|nicht (sehr |zu )?breit/i,'schmal'],[/dicht|gefüllt|voll/i,'dicht'],[/gerade/i,'gerade'],
+  [/nordmann/i,'Nordmann'],[/ecke|eine seite|einer seite/i,'eine Seite flach ok'],[/kahl/i,'nicht kahl'],[/kegel/i,'kegelförmig'],[/gleichmä/i,'gleichmäßig']];
+const tagsOf = note => TAGS.filter(([re]) => re.test(note||'')).map(([,l]) => l);
+
+// ---- Ereignisse: claim (suche aus) · release (abgeben) · done (vorbereitet) · issue (Problem) · undo (zurücksetzen) · nr (Nummer nachtragen)
+// Alle Geräte werten dieselbe Reihenfolge des Servers aus → überall derselbe Stand; bei gleichzeitigem Zugriff gewinnt der Erste.
+// snap = Zwischenstand der Zentrale (ntfy hält Meldungen nur 12 h): gilt je Baum nur, wenn er neuer ist als das, was das Gerät schon weiß.
+const SNAP_ST = ['open','work','done','issue'];
+function reduceEvents(evs, base){
+  const st = {}, rejected = new Set();
+  const applySnap = s => { for(const [id, v] of Object.entries(s || {})){ const at = v[2] || 0;
+    if(!st[id] || (st[id].at || 0) < at) st[id] = {st:SNAP_ST[v[0]] || 'open', who:v[1] || '', at, nr:v[3] || '', note:v[4] || ''}; } };
+  applySnap(base);
+  for(const e of evs){
+    if(e.k === 'snap'){ applySnap(e.s); continue; }
+    const o = st[e.id] || {st:'open'};
+    if(e.k === 'claim'){
+      if(!e.force && ((o.st === 'work' && o.who !== e.who) || o.st === 'done')){ rejected.add(e.i); continue; }
+      st[e.id] = {st:'work', who:e.who, at:e.a, nr:o.nr};
+    } else if(e.k === 'release'){ if(o.st === 'work' && (o.who === e.who || e.force)) st[e.id] = {st:'open', at:e.a, nr:o.nr}; }
+    else if(e.k === 'done'){ st[e.id] = {st:'done', who:e.who, at:e.a, nr:e.nr || o.nr || '', note:e.note || ''}; }
+    else if(e.k === 'issue'){ st[e.id] = {st:'issue', who:e.who, at:e.a, note:e.note || '', nr:o.nr}; }
+    else if(e.k === 'undo'){ st[e.id] = {st:'open', at:e.a}; }
+    else if(e.k === 'nr'){ st[e.id] = Object.assign({}, o, {nr:e.nr || '', at:e.a}); }
+  }
+  return {st, rejected};
+}
+// Zwischenstand in Stücke teilen (eine ntfy-Meldung darf höchstens 4 KB groß sein)
+function snapChunks(st){
+  const out = []; let cur = {}, len = 0;
+  for(const [id, v] of Object.entries(st)){
+    const e = [SNAP_ST.indexOf(v.st), v.who || '', v.at || 0, v.nr || '', (v.note || '').slice(0, 80)];
+    const l = JSON.stringify(e).length + id.length + 4;
+    if(len + l > 1800 && len){ out.push(cur); cur = {}; len = 0; }
+    cur[id] = e; len += l;
+  }
+  if(len) out.push(cur);
+  return out;
+}
+
+// ---- Live-Kanal über ntfy.sh: Server-Datenstrom (SSE) + Warteschlange für eigene Meldungen
+class Channel {
+  constructor(topic, key, storeKey, onChange){
+    this.topic = topic; this.key = key; this.storeKey = storeKey; this.onChange = onChange;
+    let s = null; try{ s = JSON.parse(localStorage.getItem(storeKey) || 'null'); }catch(e){}
+    this.s = Object.assign({evs:[], seen:{}, last:'', out:[]}, s || {});
+    this.conn = null; this.es = null; this.timer = null; this.flushing = false; this.retry = 1000;
+  }
+  save(){ try{ localStorage.setItem(this.storeKey, JSON.stringify(this.s)); }catch(e){} }
+  events(){ return this.s.evs.concat(this.s.out); }
+  pending(){ return this.s.out.length; }
+  // kurze Unterbrechungen (Neuverbindung) nicht als Fehler zeigen
+  offline(){ return this.conn === false && Date.now() - (this.downSince || Date.now()) > 8000; }
+  start(){
+    if(this.es) this.es.close();
+    let es;
+    try{ es = new EventSource(`${NTFY}${this.topic}/sse?since=${encodeURIComponent(this.s.last || 'all')}`); }
+    catch(e){ this.conn = false; this.onChange(); return; }
+    this.es = es;
+    es.onopen = () => { this.conn = true; this.downSince = 0; this.retry = 1000; this.onChange(); this.flush(); };
+    es.onmessage = ev => this.receive(ev.data);
+    es.onerror = () => { es.close(); if(this.es === es) this.es = null; this.conn = false; this.downSince ||= Date.now(); this.onChange();
+      clearTimeout(this.timer); this.timer = setTimeout(() => this.start(), this.retry); this.retry = Math.min(this.retry * 2, 30000); };
+  }
+  async receive(data){
+    let m; try{ m = JSON.parse(data); }catch(e){ return; }
+    if(m.event && m.event !== 'message') return;
+    if(!m.id || this.s.seen[m.id]) return;
+    this.s.seen[m.id] = 1; this.s.last = m.id;
+    let d = null; try{ d = await decryptMsg(this.key, m.message); }catch(e){}
+    if(d && Array.isArray(d.e)){
+      const have = new Set(this.s.evs.map(e => e.i));
+      for(const e of d.e) if(e && e.i && !have.has(e.i)){ this.s.evs.push(e); have.add(e.i); }
+      const echoed = new Set(d.e.map(e => e && e.i));
+      this.s.out = this.s.out.filter(e => !echoed.has(e.i));   // eigene Meldung ist beim Server angekommen
+    }
+    this.save(); this.onChange();
+  }
+  send(ev){
+    const e = Object.assign({i: Math.random().toString(36).slice(2,10) + Date.now().toString(36), a: Date.now()}, ev);
+    this.s.out.push(e); this.save(); this.onChange(); this.flush();
+    return e;
+  }
+  async flush(){
+    if(this.flushing) return;
+    const batch = []; let size = 0;
+    for(const e of this.s.out){ if(e.sent) continue; const l = JSON.stringify(e).length; if(batch.length && (size + l > 2200 || batch.length >= 20)) break; batch.push(e); size += l; }
+    if(!batch.length) return;
+    this.flushing = true;
+    try{
+      const body = await encryptMsg(this.key, {v:1, e: batch.map(({sent, ...x}) => x)});
+      try{ const r = await fetch(NTFY + this.topic, {method:'POST', body}); if(!r.ok) throw new Error('HTTP ' + r.status); }
+      catch(err){ if(String(err.message).startsWith('HTTP')) throw err; await fetch(NTFY + this.topic, {method:'POST', body, mode:'no-cors'}); }
+      batch.forEach(e => { const x = this.s.out.find(o => o.i === e.i); if(x) x.sent = Date.now(); });
+      this.save(); this.sendErr = false;
+    }catch(err){ this.sendErr = true; }
+    this.flushing = false; this.onChange();
+    if(this.s.out.some(e => !e.sent)) setTimeout(() => this.flush(), this.sendErr ? 15000 : 300);
+    // gesendet, aber nach 60 s nicht vom Server zurückgekommen → nochmals senden (doppelte werden ignoriert)
+    setTimeout(() => { let again = false; this.s.out.forEach(e => { if(e.sent && Date.now() - e.sent > 60000){ delete e.sent; again = true; } }); if(again){ this.save(); this.flush(); } }, 61000);
+  }
+}
+
+</script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const load = (k, d) => { try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } };
+const save = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
+const hashStr = s => { let h = 5381; for(let i=0;i<s.length;i++) h = ((h<<5)+h + s.charCodeAt(i)) | 0; return (h>>>0).toString(36); };
+const time = t => new Date(t).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+
+function decode(){
+  const h = location.hash.slice(1);
+  if(!h.startsWith('p=')) return null;
+  try{ const j = LZString.decompressFromEncodedURIComponent(h.slice(2)); return j ? JSON.parse(j) : 'bad'; }catch(e){ return 'bad'; }
+}
+const T = decode();
+let me = load('ka_name', '');
+let pref = load('ka_pref', {st:'offen', sz:''});
+let ch = null, view = {st:{}, rejected:new Set()};
+const notified = new Set(load('ka_notified', []));
+let orders = [], lastHtml = '';
+const typed = {};
+
+function message(title, html){ $('main').innerHTML = `<div class="msg"><h2>${esc(title)}</h2><p style="color:var(--muted)">${html}</p></div>`; }
+function toast(t){ const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 4500); }
+
+function askName(force){
+  if(me && !force) return Promise.resolve(me);
+  return new Promise(res => {
+    const m = document.createElement('div'); m.className = 'modal';
+    m.innerHTML = `<div class="in3"><h2>Wer bist du?</h2><p style="color:var(--muted);margin:0 0 10px">Dein Name wird den anderen angezeigt, wenn du einen Baum aussuchst.</p>
+      <input class="in" id="nm" maxlength="24" placeholder="Vorname" value="${esc(me)}"><button class="btn primary" id="nmOk" style="width:100%;margin-top:10px">Los geht's</button></div>`;
+    document.body.appendChild(m);
+    const ok = () => { const v = $('nm').value.trim(); if(!v) return $('nm').focus(); me = v; save('ka_name', me); m.remove(); res(me); render(); };
+    $('nmOk').onclick = ok; $('nm').onkeydown = e => { if(e.key === 'Enter') ok(); }; setTimeout(() => $('nm').focus(), 50);
+  });
+}
+
+/* ---------- Anzeige ---------- */
+const ST_CHIPS = [['offen','Offen'],['meine','Meine'],['work','In Arbeit'],['done','Fertig'],['issue','Problem'],['alle','Alle']];
+function stateOf(o){ return view.st[o.id] || {st:'open'}; }
+function match(o, f){
+  const s = stateOf(o);
+  if(f === 'offen') return s.st === 'open' || (s.st === 'work' && s.who === me);
+  if(f === 'meine') return s.who === me && (s.st === 'work' || s.st === 'done' || s.st === 'issue');
+  if(f === 'work') return s.st === 'work';
+  if(f === 'done') return s.st === 'done';
+  if(f === 'issue') return s.st === 'issue';
+  return true;
+}
+function render(){
+  if(!ch) return;
+  view = reduceEvents(ch.events(), T.s);
+  // eigene Reservierung verloren?
+  for(const e of ch.s.evs) if(e.k === 'claim' && e.who === me && view.rejected.has(e.i) && !notified.has(e.i)){
+    notified.add(e.i); save('ka_notified', [...notified].slice(-200));
+    const s = view.st[e.id]; toast(`${orderLabel(e.id)}: ${s && s.who ? s.who + ' war schneller' : 'schon vergeben'} – bitte einen anderen Baum nehmen.`);
+  }
+  const done = orders.filter(o => stateOf(o).st === 'done').length;
+  $('barFill').style.width = (orders.length ? 100 * done / orders.length : 0) + '%';
+  $('sub').textContent = `${me || '–'} · ${done} von ${orders.length} vorbereitet · ${orders.filter(o => stateOf(o).st === 'work').length} in Arbeit`;
+  const szs = [...new Set(orders.map(o => o.sz))].sort((a,b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b));
+  $('stChips').innerHTML = ST_CHIPS.map(([k,l]) => `<button data-st="${k}" class="${pref.st===k?'on':''}">${l} <small>${orders.filter(o => match(o,k) && (!pref.sz || o.sz === pref.sz)).length}</small></button>`).join('');
+  $('szChips').innerHTML = `<button data-sz="" class="${!pref.sz?'on':''}">Alle Größen</button>` + szs.map(z => `<button data-sz="${z}" class="${pref.sz===z?'on':''}">${z} <small>${orders.filter(o => o.sz === z && match(o, pref.st)).length}</small></button>`).join('');
+  const q = $('search').value.trim().toLowerCase();
+  const list = orders.filter(o => match(o, pref.st) && (!pref.sz || o.sz === pref.sz) && (!q || [o.nr, o.id, o.size, o.max, o.form, o.note, o.cat].join(' ').toLowerCase().includes(q)));
+  // eigene, laufende zuerst
+  list.sort((a,b) => (stateOf(b).st === 'work' && stateOf(b).who === me) - (stateOf(a).st === 'work' && stateOf(a).who === me));
+  const html = list.length ? list.map(card).join('') : `<div class="empty">Keine Bäume in dieser Ansicht.</div>`;
+  if(html !== lastHtml){   // nur neu aufbauen, wenn sich etwas geändert hat – eingetippte Nummern bleiben erhalten
+    const act = document.activeElement && document.activeElement.id, pos = act && document.activeElement.selectionStart;
+    $('main').innerHTML = html; lastHtml = html;
+    for(const [k, v] of Object.entries(typed)){ const el = $(k); if(el) el.value = v; }
+    if(act && $(act)){ $(act).focus(); try{ $(act).setSelectionRange(pos, pos); }catch(e){} }
+  }
+  const pend = ch.pending(), unsent = ch.s.out.filter(e => !e.sent).length;
+  $('net').innerHTML = ch.offline() ? `<span class="err">⚠ keine Verbindung${pend ? ` – ${pend} Meldung(en) warten` : ''}</span>`
+    : pend ? (unsent && ch.sendErr ? `<span class="err">📡 ${pend} Meldung(en) warten auf Netz</span>` : `📡 sende …`) : (ch.conn ? '📡 live ✓' : '📡 verbinde …');
+  $('cnt').textContent = `${list.length} angezeigt`;
+}
+const orderLabel = id => { const o = orders.find(x => x.id === id); return o && o.nr ? `Baum ${o.nr}` : id; };
+function card(o){
+  const s = stateOf(o), mine = s.who === me, nr = s.nr || o.nr;
+  const cls = s.st === 'work' ? 'work' + (mine ? ' mine' : '') : s.st;
+  const stateLine = s.st === 'work' ? `<div class="state work">🔎 ${mine ? 'Du suchst aus' : esc(s.who) + ' sucht aus'} · seit ${time(s.at)}</div>`
+    : s.st === 'done' ? `<div class="state done">✅ Vorbereitet von ${esc(s.who)} · ${time(s.at)}${s.note ? ' · ' + esc(s.note) : ''}</div>`
+    : s.st === 'issue' ? `<div class="state issue">⚠ Problem (${esc(s.who)}): ${esc(s.note || 'kein passender Baum')}</div>` : '';
+  let acts = '';
+  if(s.st === 'open' || s.st === 'issue') acts = `<button class="btn primary wide" data-a="claim" data-id="${esc(o.id)}">🔎 Ich suche diesen Baum aus</button>`;
+  else if(s.st === 'work' && mine) acts = `${!nr ? `<input class="in wide" id="nr_${esc(o.id)}" inputmode="numeric" placeholder="Baumnummer (Etikett)">` : ''}
+    <button class="btn ok wide" data-a="done" data-id="${esc(o.id)}">✅ Gefunden & vorbereitet</button>
+    <button class="btn small" data-a="release" data-id="${esc(o.id)}">Abgeben</button>
+    <button class="btn small" data-a="issue" data-id="${esc(o.id)}">⚠ Problem melden</button>`;
+  else if(s.st === 'work') acts = `<button class="btn small wide" data-a="steal" data-id="${esc(o.id)}">Übernehmen (falls ${esc(s.who)} nicht mehr sucht)</button>`;
+  else if(s.st === 'done') acts = `<button class="btn small wide" data-a="undo" data-id="${esc(o.id)}">Rückgängig</button>`;
+  const tags = [o.form ? `<span class="tag form">${esc(o.form)}</span>` : '', ...tagsOf(o.note).map(t => `<span class="tag${t.startsWith('✂') ? ' cut' : ''}">${esc(t)}</span>`)].join('');
+  return `<div class="card ${cls}" id="c_${esc(o.id)}">
+    <div class="top"><div class="nr${nr ? '' : ' none'}"><b>${esc(nr || '–')}</b><span>${nr ? 'Baum-Nr.' : 'ohne Nr.'}</span></div>
+      <div style="flex:1;min-width:0"><div class="size">${esc(o.cat)} · ${esc(o.id)}</div>
+        <div class="wish">${esc(wishText(o.w) || 'keine Angabe')}</div>
+        <div class="raw">Wunsch: „${esc(o.size || '–')}“${o.max && o.max !== '[<]' ? ` · Grenze: ${esc(o.max)}` : ''}</div>
+        ${tags ? `<div class="tags">${tags}</div>` : ''}</div></div>
+    ${wishIssues(o.w).map(t => `<div class="warnl">⚠ ${esc(t)}</div>`).join('')}
+    ${o.note ? `<div class="note">${esc(o.note)}</div>` : ''}
+    ${stateLine}
+    ${acts ? `<div class="acts">${acts}</div>` : ''}
+  </div>`;
+}
+
+/* ---------- Aktionen ---------- */
+$('main').addEventListener('click', async e => {
+  const b = e.target.closest('[data-a]'); if(!b) return;
+  const id = b.dataset.id, a = b.dataset.a, s = view.st[id] || {st:'open'};
+  if(!me) await askName();
+  if(a === 'claim'){
+    const mineOpen = orders.filter(o => { const x = stateOf(o); return x.st === 'work' && x.who === me; });
+    if(mineOpen.length >= 3 && !confirm(`Du hast schon ${mineOpen.length} Bäume in Arbeit. Trotzdem noch einen übernehmen?`)) return;
+    ch.send({k:'claim', id, who:me});
+  }
+  if(a === 'steal'){ if(!confirm(`${s.who} sucht diesen Baum gerade aus. Wirklich übernehmen?`)) return; ch.send({k:'claim', id, who:me, force:1}); }
+  if(a === 'release') ch.send({k:'release', id, who:me});
+  if(a === 'done'){
+    const o = orders.find(x => x.id === id), inp = $('nr_' + id);
+    const nr = inp ? inp.value.trim() : '';
+    if(inp && !nr && !confirm('Ohne Baumnummer abschließen? Die Nummer muss dann später nachgetragen werden.')) return inp.focus();
+    ch.send({k:'done', id, who:me, nr: nr || undefined});
+  }
+  if(a === 'issue'){ const n = prompt('Was ist das Problem? (z. B. „kein Baum über 2,40 m da“)', ''); if(n === null) return; ch.send({k:'issue', id, who:me, note:n.trim() || 'kein passender Baum'}); }
+  if(a === 'undo'){ if(!confirm('Diesen Baum wieder auf „offen“ setzen?')) return; ch.send({k:'undo', id, who:me}); }
+});
+$('main').addEventListener('input', e => { if(e.target.id && e.target.id.startsWith('nr_')) typed[e.target.id] = e.target.value; });
+$('stChips').addEventListener('click', e => { const b = e.target.closest('[data-st]'); if(!b) return; pref.st = b.dataset.st; save('ka_pref', pref); render(); });
+$('szChips').addEventListener('click', e => { const b = e.target.closest('[data-sz]'); if(!b) return; pref.sz = b.dataset.sz; save('ka_pref', pref); render(); });
+$('search').oninput = render;
+$('btnName').onclick = () => askName(true);
+window.addEventListener('online', () => ch && ch.flush());
+
+/* ---------- Start ---------- */
+if(T === null) message('Bäume aussuchen', 'Diese Seite zeigt die Liste zum Aussuchen der Bäume. Bitte den Link oder QR-Code von der Zentrale öffnen.');
+else if(T === 'bad' || !T.o || !T.nt) message('Link unvollständig', 'Der Link konnte nicht gelesen werden – wahrscheinlich wurde er beim Kopieren abgeschnitten. Bitte neu anfordern.');
+else if(T.exp && Date.now() > Date.parse(T.exp)) message('Link abgelaufen', 'Dieser Link ist nicht mehr gültig. Bitte bei der Zentrale einen neuen anfordern.');
+else if(!window.crypto || !crypto.subtle) message('Browser zu alt', 'Bitte die Seite in einem aktuellen Browser öffnen (Chrome, Safari, Firefox).');
+else {
+  orders = T.o.map(([id, nr, ci, size, max, form, note]) => { const cat = T.c[ci] || ''; return {id, nr, cat, sz:catKey(cat), size, max, form, note, w:parseWish(size, max, cat)}; })
+    .sort((a,b) => (SIZE_ORDER.indexOf(a.sz) - SIZE_ORDER.indexOf(b.sz)) || ((a.w.target ?? a.w.lo ?? a.w.hi ?? 0) - (b.w.target ?? b.w.lo ?? b.w.hi ?? 0)));
+  document.title = `${T.t || 'Bäume aussuchen'}`;
+  if(T.t) $('title').textContent = '🌲 ' + T.t;
+  $('hdr').hidden = false; $('ftr').hidden = false;
+  ch = new Channel(T.nt, T.nk, 'ka_ch_' + hashStr(T.nt), render);
+  ch.start(); ch.flush();
+  render(); setInterval(render, 5000);
+  if(!me) askName();
+}
+</script>
+</body>
+</html>
